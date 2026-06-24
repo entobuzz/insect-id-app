@@ -305,7 +305,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
   <div class="level-bar-wrap">
     <div class="level-row">
       <span class="level-badge" id="levelBadge">Lv 1</span>
-      <span class="level-ability" id="levelAbility">是不是昆蟲</span>
     </div>
     <div class="level-track">
       <div class="level-fill" id="levelFill" style="width:0%"></div>
@@ -517,9 +516,10 @@ function renderResult(text) {
   if (cur) sections.push(cur);
 
   const firstLine = sections[0]?.content?.split('\n')[0] || '未知昆蟲';
-  // Split Chinese name and scientific name
-  // Scientific name usually starts with capital letter after space
-  const sciMatch = firstLine.match(/^(.+?)\s+([A-Z][a-z]+.*)$/);
+  // Clean up any asterisks, brackets from AI response
+  const cleanLine = firstLine.replace(/\*/g,'').replace(/[\(\)]/g,'').trim();
+  // Split Chinese name and scientific name (sci name starts with capital)
+  const sciMatch = cleanLine.match(/^([^A-Z]+?)\s+([A-Z][a-z]+.*)$/);
   if (sciMatch) {
     currentName = sciMatch[1].trim();
     const sciName = sciMatch[2].trim();
@@ -527,11 +527,10 @@ function renderResult(text) {
     document.getElementById('rName').textContent = currentName;
     document.getElementById('rClass').innerHTML = `<em>${sciName}</em>`;
   } else {
-    currentName = firstLine;
+    currentName = cleanLine;
     document.getElementById('rIcon').textContent = getIcon(currentName + text);
     document.getElementById('rName').textContent = currentName;
-    const cls = sections.find(s => s.label === '分類');
-    document.getElementById('rClass').textContent = cls?.content || '';
+    document.getElementById('rClass').textContent = '';
   }
 
   document.getElementById('rBody').innerHTML = sections.slice(1).map(s => {
@@ -770,7 +769,6 @@ function updateLevelUI(total) {
   currentLevel = levelOverride !== null ? levelOverride : autoLevel;
 
   document.getElementById('levelBadge').textContent = `Lv ${currentLevel}`;
-  document.getElementById('levelAbility').textContent = getLevelAbility(currentLevel);
 
   // Progress bar - fill based on position between milestones
   const pct = Math.min(100, currentLevel);
